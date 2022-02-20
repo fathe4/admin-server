@@ -11,7 +11,6 @@ app.use(express.json())
 
 const uri = `mongodb+srv://bicyledbnew:bicyledbnew321@cluster0.wanl6.mongodb.net/myFirstDatabase?retryWrites=true&w=majority`;
 
-console.log(uri);
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
 
 const UPLOAD_FOLDER = "./uploads/"
@@ -53,7 +52,7 @@ async function run() {
             console.log(url + '/public/' + req.file.filename);
 
             const productDetail = {
-                images: req.files,
+                images: req.file,
                 imageUrl: url + '/uploads/' + req.file.filename
             }
 
