@@ -12,6 +12,10 @@ const fs = require('fs');
 const uri = `mongodb+srv://bicyledbnew:bicyledbnew321@cluster0.wanl6.mongodb.net/myFirstDatabase?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
 
+app.listen(port, () => {
+    console.log(`Example app listening at http://localhost:${port}`)
+})
+
 app.use(cors())
 app.use(express.json())
 
@@ -249,6 +253,3 @@ app.get('/', (req, res) => {
 })
 
 
-app.listen(port, () => {
-    console.log(`Example app listening at http://localhost:${port}`)
-})
