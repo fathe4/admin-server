@@ -229,7 +229,7 @@ async function run() {
                 $push: {
                     options: options
                 },
-            };
+            }
 
             const result = await unityMartAttributes.updateOne(filter, updateDoc);
             res.json(result)
@@ -249,6 +249,6 @@ app.get('/', (req, res) => {
 })
 
 
-app.listen(5000, () => {
-    console.log(`Example app listening at http://localhost:${5000}`)
+app.listen(port, () => {
+    console.log(`Example app listening at http://localhost:${port}`)
 })
