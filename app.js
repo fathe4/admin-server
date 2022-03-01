@@ -132,6 +132,14 @@ async function run() {
             const result = await cursor.toArray()
             res.json(result)
         })
+        //  GET PRODUCTS by ID
+        app.get('/product/:id', async (req, res) => {
+            const id = req.params.id
+            const filter = { _id: objectId(id) }
+            const cursor = unityMartProductsCollection.find(filter);
+            const result = await cursor.toArray()
+            res.json(result)
+        })
 
         // ADD CATEGORY
         app.post('/dashboard/addCategory', async (req, res) => {
