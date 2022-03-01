@@ -132,7 +132,7 @@ async function run() {
             const result = await cursor.toArray()
             res.json(result)
         })
-        //  GET PRODUCTS by ID
+        //  GET PRODUCTS BY ID
         app.get('/product/:id', async (req, res) => {
             const id = req.params.id
             const filter = { _id: objectId(id) }
