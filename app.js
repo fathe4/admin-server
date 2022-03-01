@@ -127,7 +127,7 @@ async function run() {
 
         })
         //  GET PRODUCTS
-        app.get('/dashboard/products', async (req, res) => {
+        app.get('/products', async (req, res) => {
             const cursor = unityMartProductsCollection.find({});
             const result = await cursor.toArray()
             res.json(result)
