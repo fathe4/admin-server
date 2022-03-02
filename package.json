@@ -24,6 +24,7 @@
     "mongoose": "^6.2.2",
     "multer": "^1.4.4",
     "multer-gridfs-storage": "^5.0.2",
-    "react-awesome-modal": "^2.0.5"
+    "react-awesome-modal": "^2.0.5",
+    "shortid": "^2.2.16"
   }
 }
