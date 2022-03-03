@@ -130,7 +130,7 @@ async function run() {
             res.json(result)
 
         })
-        //  GET PRODUCTS
+        //  GET PRODUCTSs
         app.get('/products', async (req, res) => {
             const cursor = unityMartProductsCollection.find({});
             const result = await cursor.toArray()
@@ -338,7 +338,6 @@ async function run() {
         })
 
         // DELETE SHORT URL
-
         app.delete('/delete/shortUrl/:shortUrl', async (req, res) => {
             const short = req.params.shortUrl
             const query = { short: short }
