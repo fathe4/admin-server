@@ -18,8 +18,7 @@ app.listen(port, () => {
     console.log(`Example app listening at http://localhost:${port}`)
 })
 
-app.use(cors())
-app.use(express.json())
+
 
 
 var storage = multer.diskStorage({
@@ -241,11 +240,12 @@ async function run() {
 
         })
 
-        // ADD ATTRIBUTES VALUE
+        // ADD ATTRIBUTES VALUEe
         app.put('/dashboard/attributes/', async (req, res) => {
             const { options, id } = req.body
             console.log(options);
             const filter = { _id: objectId(id) }
+            // const slug = label?.split(' ').join('-')
             // const slug = label?.split(' ').join('-')
             const updateDoc = {
                 $push: {
@@ -399,7 +399,8 @@ async function run() {
 }
 
 run().catch(console.dir);
-
+app.use(cors())
+app.use(express.json())
 app.get('/', (req, res) => {
     res.send('Hello World!')
 })
