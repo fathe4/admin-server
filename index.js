@@ -1,4 +1,5 @@
 const cors = require("cors");
+require('dotenv').config()
 const express = require("express");
 const app = express();
 const multer = require("multer");
@@ -8,17 +9,16 @@ const port = process.env.PORT || 5000
 const path = require("path")
 const fs = require('fs');
 const shortId = require('shortid')
+const stripe = require('stripe')(process.env.STRIPE_SECRET);
 
 
-
+// const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.wanl6.mongodb.net/myFirstDatabase?retryWrites=true&w=majority`;
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.wanl6.mongodb.net/myFirstDatabase?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
 
 app.listen(port, () => {
     console.log(`Example app listening at http://localhost:${port}`)
 })
-
-
 
 
 var storage = multer.diskStorage({
@@ -82,9 +82,25 @@ async function run() {
         const unityMartCategories = database.collection('categories')
         const unityMartAttributes = database.collection('attributes')
         const unityMartProductsCollection = database.collection("products");
+        const unityMartOrdersCollection = database.collection("orders");
         const unityMartMediaCollection = database.collection("media");
         const bicycleAffiliateLinksCollection = database.collection("affiliate-links");
         const bicycleRealTimeDataCollection = database.collection("affiliate-daily-data");
+
+
+        // STRIPE
+        app.post('/create-payment-intent', async (req, res) => {
+            const paymentInfo = req.body;
+            console.log(paymentInfo, 'ss');
+            const amount = paymentInfo.cartTotal * 100;
+            const paymentIntent = await stripe.paymentIntents.create({
+                currency: 'usd',
+                amount: amount,
+                payment_method_types: ['card'],
+
+            });
+            res.json({ clientSecret: paymentIntent.client_secret })
+        })
 
 
 
@@ -389,6 +405,85 @@ async function run() {
             res.redirect(`${urlDoc.value.full}?ref=${req.params.shortUrl}`)
 
         })
+
+        // =========================== ORDERS START ============================================= //
+        // ADD ORDERS
+        app.post('/dashboard/orders', async (req, res) => {
+            // console.log(req, 'hitting orders');
+            const productDetail = req.body
+            const result = await unityMartOrdersCollection.insertOne(productDetail)
+            res.json(result)
+        })
+
+        // CHECK ORDERS By ID
+        app.get('/dashboard/orders', async (req, res) => {
+
+
+            if (req.query.userEmail) {
+                console.log('email');
+                const email = req.query.userEmail
+                const query = { "details.email": email }
+                const cursor = unityMartOrdersCollection.find(query);
+                const result = await cursor.toArray()
+                console.log(result);
+                res.json(result)
+
+            } else if (req.query.id) {
+                const id = req.query.id
+                const filter = { _id: objectId(id) }
+                const cursor = unityMartOrdersCollection.find(filter);
+                const result = await cursor.toArray()
+                console.log(result);
+                res.json(result)
+            } else {
+
+
+                const cursor = unityMartOrdersCollection.find({});
+                const result = await cursor.toArray()
+                console.log(result);
+                res.json(result)
+            }
+
+
+        })
+
+
+        // DISPLAY ORDERS
+        app.get('/dashboard/orders', async (req, res) => {
+            const order = req.query
+            const cursor = unityMartOrdersCollection.find(order);
+            const result = await cursor.toArray()
+            res.json(result)
+
+        })
+
+        // UPDATE STATUS
+        app.put('/dashboard/orders/:id', async (req, res) => {
+            const id = req.params.id
+            const updateStatus = req.body
+
+            const filter = { _id: objectId(id) };
+            const options = { upsert: true };
+            const updateDoc = {
+                $set: {
+                    status: updateStatus.status
+                },
+            };
+            const result = await unityMartOrdersCollection.updateOne(filter, updateDoc, options);
+            res.json(result)
+
+        })
+
+        // DELETE ORDER
+        app.delete('/dashboard/orders/:id', async (req, res) => {
+            const id = req.params.id
+            const query = { _id: objectId(id) }
+            const result = await unityMartOrdersCollection.deleteOne(query)
+            res.json(result)
+
+        })
+        // =========================== ORDERS END   ============================================= //
+
 
 
 
