@@ -418,7 +418,6 @@ async function run() {
         // CHECK ORDERS By ID
         app.get('/dashboard/orders', async (req, res) => {
 
-
             if (req.query.userEmail) {
                 console.log('email');
                 const email = req.query.userEmail
@@ -451,7 +450,7 @@ async function run() {
         // DISPLAY ORDERS
         app.get('/dashboard/orders', async (req, res) => {
             const order = req.query
-            const cursor = unityMartOrdersCollection.find(order);
+            const cursor = unityMartOrdersCollection.find({});
             const result = await cursor.toArray()
             res.json(result)
 
@@ -466,7 +465,8 @@ async function run() {
             const options = { upsert: true };
             const updateDoc = {
                 $set: {
-                    status: updateStatus.status
+                    status: updateStatus.status,
+                    deliveryDate: updateStatus.deliveryDate
                 },
             };
             const result = await unityMartOrdersCollection.updateOne(filter, updateDoc, options);
