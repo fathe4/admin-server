@@ -421,10 +421,10 @@ async function run() {
             if (req.query.userEmail) {
                 console.log('email');
                 const email = req.query.userEmail
-                const query = { "details.email": email }
+                const query = { "paymentDetails.email": email }
                 const cursor = unityMartOrdersCollection.find(query);
                 const result = await cursor.toArray()
-                console.log(result);
+                // console.log(result);
                 res.json(result)
 
             } else if (req.query.id) {
@@ -482,6 +482,19 @@ async function run() {
             res.json(result)
 
         })
+
+        // ORDER TRACKING
+        app.get('/dashboard/track-order', async (req, res) => {
+            const id = parseInt(req.query.createdid)
+            const email = req.query.email
+            console.log(email);
+            const query = { "paymentDetails.createdId": id, "paymentDetails.email": email, }
+            const cursor = unityMartOrdersCollection.find(query);
+            const result = await cursor.toArray()
+            res.json(result)
+
+        })
+
         // =========================== ORDERS END   ============================================= //
 
 
