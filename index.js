@@ -86,6 +86,54 @@ async function run() {
         const unityMartMediaCollection = database.collection("media");
         const bicycleAffiliateLinksCollection = database.collection("affiliate-links");
         const bicycleRealTimeDataCollection = database.collection("affiliate-daily-data");
+        const unityMartUsersCollection = database.collection("users");
+        const unityMartVendorsCollection = database.collection("vendors");
+
+        // ADD USERS 
+        app.post('/addUser', async (req, res) => {
+            console.log('hitting user');
+            const user = req.body
+            const isExist = await unityMartUsersCollection.findOne({ email: user.email });
+            console.log(isExist, 'isExist');
+            if (!isExist) {
+                const result = await unityMartUsersCollection.insertOne(user)
+                res.json(result)
+                console.log(result);
+            }
+
+        })
+
+        // UPDATE USER
+        app.put('/addUser', async (req, res) => {
+            const user = req.body;
+            const filter = { email: user.email };
+            const options = { upsert: true };
+            const updateDoc = { $set: user };
+            const result = await unityMartUsersCollection.updateOne(filter, updateDoc, options);
+            res.json(result);
+        });
+
+        // ADMIN CHECK
+        app.get('/users/:email', async (req, res) => {
+            console.log('admin', req.params);
+            const email = req.params.email
+            const adminEmail = { email: email }
+            // console.log(adminEmail);
+            const user = await unityMartUsersCollection.findOne(adminEmail);
+            // console.log(user);
+            let isAdmin = false;
+            if (user?.roll === 'admin') {
+                isAdmin = true
+            }
+            res.json(user)
+        })
+
+        // USER CHECK
+        app.get('/users/', async (req, res) => {
+            const user = unityMartUsersCollection.find({});
+            const result = await user.toArray()
+            res.json(result)
+        })
 
 
         // STRIPE
@@ -496,6 +544,33 @@ async function run() {
         })
 
         // =========================== ORDERS END   ============================================= //
+
+
+        // =========================== VENDOR START  ============================================= //
+        // ADD VENDOR 
+        app.post('/add-vendor', async (req, res) => {
+            console.log('hitting vendor');
+            const vendor = req.body
+            const isExist = await unityMartVendorsCollection.findOne({ storeEmail: vendor.storeEmail });
+            const updateDoc = {
+                $set: {
+                    role: 'vendor',
+                    store: vendor.storeName,
+                    slug: vendor.storeSlug
+                },
+            };
+            if (!isExist) {
+                const result = await unityMartVendorsCollection.insertOne(vendor)
+                const urlDoc = await unityMartUsersCollection.findOneAndUpdate({ email: vendor.storeEmail }, updateDoc, {
+                    new: false,
+                    upsert: true
+                })
+                res.json(result)
+                console.log(result);
+            }
+
+        })
+        // =========================== VENDOR END  ============================================= //
 
 
 
