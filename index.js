@@ -194,9 +194,9 @@ async function run() {
                     publisher
                 }
             }
-            console.log(productDetail);
-            // const result = await unityMartProductsCollection.insertOne(productDetail)
-            // res.json(result)
+
+            const result = await unityMartProductsCollection.insertOne(productDetail)
+            res.json(result)
 
         })
         //  GET PRODUCTSs
