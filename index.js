@@ -176,7 +176,7 @@ async function run() {
 
         // ADD PRODUCTS
         app.post('/dashboard/addProduct', async (req, res) => {
-            const { offerDate, title, brand, reg_price, sale_price, stock, images, categories, product_des, newAttributes } = req.body
+            const { offerDate, title, brand, reg_price, sale_price, stock, images, categories, product_des, newAttributes, vendor, store, publisher } = req.body
             const productDetail = {
                 title,
                 brand,
@@ -187,10 +187,16 @@ async function run() {
                 categories,
                 product_des,
                 offerDate,
-                attributes: newAttributes
+                attributes: newAttributes,
+                publisherDetails: {
+                    vendor,
+                    store,
+                    publisher
+                }
             }
-            const result = await unityMartProductsCollection.insertOne(productDetail)
-            res.json(result)
+            console.log(productDetail);
+            // const result = await unityMartProductsCollection.insertOne(productDetail)
+            // res.json(result)
 
         })
         //  GET PRODUCTSs
