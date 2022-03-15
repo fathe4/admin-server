@@ -609,8 +609,16 @@ async function run() {
         })
         // VENDORS
         app.get('/user/vendors', async (req, res) => {
-            console.log('hit vendor');
             const query = {}
+            const cursor = unityMartVendorsCollection.find(query);
+            const result = await cursor.toArray()
+            // console.log(result);
+            res.json(result)
+        })
+        // VENDORS
+        app.get('/user/vendor/:slug', async (req, res) => {
+            const email = req.params.slug
+            const query = { "storeSlug": email }
             const cursor = unityMartVendorsCollection.find(query);
             const result = await cursor.toArray()
             // console.log(result);
