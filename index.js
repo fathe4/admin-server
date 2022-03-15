@@ -213,6 +213,14 @@ async function run() {
             const result = await cursor.toArray()
             res.json(result)
         })
+        //  GET PRODUCTS BY EMAIL
+        app.get('/products/:email', async (req, res) => {
+            const email = req.params.email
+            const filter = { 'publisherDetails.publisher': email }
+            const cursor = unityMartProductsCollection.find(filter);
+            const result = await cursor.toArray()
+            res.json(result)
+        })
 
         // ADD CATEGORY
         app.post('/dashboard/addCategory', async (req, res) => {
@@ -428,35 +436,39 @@ async function run() {
 
             // GETTING THE USER EMAIL TO UPDATE THE EXACT USER VALUES
             const user = await bicycleAffiliateLinksCollection.findOne(filter)
-
-            const updateData = {
-                $set: {
-                    date: date,
-                    earned: 0,
-                    affiliateUser: user.affiliateUser
-                },
-                $inc: {
-                    clicks: 1
+            let updateData
+            if (user) {
+                updateData = {
+                    $set: {
+                        date: date,
+                        earned: 0,
+                        affiliateUser: user.affiliateUser
+                    },
+                    $inc: {
+                        clicks: 1
+                    }
                 }
-            }
-            // IT WILL UPDATE THE VALUES WHO CREATED THE SHORT URL
-            const realTimeUpdate = await bicycleRealTimeDataCollection.findOneAndUpdate({ affiliateUser: user.affiliateUser }, updateData, {
-                new: true,
-                upsert: true
-            })
+                // IT WILL UPDATE THE VALUES WHO CREATED THE SHORT URL
+                const realTimeUpdate = await bicycleRealTimeDataCollection.findOneAndUpdate({ affiliateUser: user.affiliateUser }, updateData, {
+                    new: true,
+                    upsert: true
+                })
 
-            const updateDoc = {
-                $inc: {
-                    clicks: 1
+                const updateDoc = {
+                    $inc: {
+                        clicks: 1
+                    }
                 }
-            }
-            // IT WILL UPDATE THE SPECIFIC URL OBJECT
-            const urlDoc = await bicycleAffiliateLinksCollection.findOneAndUpdate(filter, updateDoc, {
-                new: false,
-                upsert: true
-            })
+                // IT WILL UPDATE THE SPECIFIC URL OBJECT
+                const urlDoc = await bicycleAffiliateLinksCollection.findOneAndUpdate(filter, updateDoc, {
+                    new: false,
+                    upsert: true
+                })
 
-            res.redirect(`${urlDoc.value.full}?ref=${req.params.shortUrl}`)
+                res.redirect(`${urlDoc.value.full}?ref=${req.params.shortUrl}`)
+            }
+
+
 
         })
 
@@ -465,15 +477,26 @@ async function run() {
         app.post('/dashboard/orders', async (req, res) => {
             // console.log(req, 'hitting orders');
             const productDetail = req.body
-            const result = await unityMartOrdersCollection.insertOne(productDetail)
+            const mapped = {};
+            productDetail.products.forEach(item => {
+                if (item.vendor.email in mapped) return mapped[item.vendor.email].push(item);
+                mapped[item.vendor.email] = [item];
+            });
+
+            const expectedFormat = Object.keys(mapped).map(key => {
+                const o = {};
+                o["products"] = mapped[key];
+                return o;
+            });
+            expectedFormat.forEach(orders => { orders.paymentDetails = productDetail.paymentDetails; orders.status = productDetail.status; orders.billing = productDetail.billing });
+            const result = await unityMartOrdersCollection.insertMany(expectedFormat)
             res.json(result)
         })
 
         // CHECK ORDERS By ID
         app.get('/dashboard/orders', async (req, res) => {
-
+            // User email
             if (req.query.userEmail) {
-                console.log('email');
                 const email = req.query.userEmail
                 const query = { "paymentDetails.email": email }
                 const cursor = unityMartOrdersCollection.find(query);
@@ -489,8 +512,6 @@ async function run() {
                 console.log(result);
                 res.json(result)
             } else {
-
-
                 const cursor = unityMartOrdersCollection.find({});
                 const result = await cursor.toArray()
                 console.log(result);
@@ -576,6 +597,26 @@ async function run() {
             }
 
         })
+        // VENDOR ORDERS
+        app.get('/dashboard/vendor-orders/', async (req, res) => {
+            console.log('hit vendor');
+            const email = req.query.email
+            const query = { "products.vendor.email": email }
+            const cursor = unityMartOrdersCollection.find(query);
+            const result = await cursor.toArray()
+            // console.log(result);
+            res.json(result)
+        })
+        // VENDORS
+        app.get('/user/vendors', async (req, res) => {
+            console.log('hit vendor');
+            const query = {}
+            const cursor = unityMartVendorsCollection.find(query);
+            const result = await cursor.toArray()
+            // console.log(result);
+            res.json(result)
+        })
+
         // =========================== VENDOR END  ============================================= //
 
 
