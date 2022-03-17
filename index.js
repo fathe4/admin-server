@@ -154,8 +154,6 @@ async function run() {
 
         // MEDIA
         app.post('/media', async (req, res, next) => {
-            console.log(req.body.images);
-            console.log(req.files);
             const images = req.body.images
             const promises = req.files.map(file => uploadAndUnlink(file));
             const urls = await Promise.all(promises);
@@ -199,6 +197,32 @@ async function run() {
             res.json(result)
 
         })
+        // UPDATE PRODUCT
+        app.put('/dashboard/updateProduct/:id', async (req, res) => {
+            const id = req.params.id
+            console.log(id);
+            const { offerDate, title, brand, reg_price, sale_price, stock, images, categories, product_des, newAttributes } = req.body
+            const filter = { _id: objectId(id) }
+            const options = { upsert: false };
+            const updateDoc = {
+                $set: {
+                    title: title,
+                    brand: brand,
+                    reg_price: reg_price,
+                    sale_price: sale_price,
+                    stock: stock,
+                    images: images,
+                    categories: categories,
+                    product_des: product_des,
+                    offerDate: offerDate,
+                    attributes: newAttributes,
+                }
+            };
+            const result = await unityMartProductsCollection.updateOne(filter, updateDoc, options);
+            res.json(result)
+            console.log(result);
+        })
+
         //  GET PRODUCTSs
         app.get('/products', async (req, res) => {
             const cursor = unityMartProductsCollection.find({});
@@ -220,6 +244,16 @@ async function run() {
             const cursor = unityMartProductsCollection.find(filter);
             const result = await cursor.toArray()
             res.json(result)
+        })
+
+        // DELETE PRODUCT
+        app.delete('/dashboard/product/:id', async (req, res) => {
+            console.log('hit p');
+            const id = req.params.id
+            const query = { _id: objectId(id) }
+            const result = await unityMartProductsCollection.deleteOne(query)
+            res.json(result)
+            console.log(result);
         })
 
         // ADD CATEGORY
