@@ -351,6 +351,34 @@ async function run() {
             }
 
         })
+        // DELETE FILED FROM ATTRIBUTE
+        app.put('/dashboard/attribute/fieldDelete/:id', async (req, res) => {
+            const id = req.params.id
+            const { value } = req.body
+            console.log(value, id);
+            const query = { _id: objectId(id) }
+            const result = await unityMartAttributes.updateOne(
+                query,
+                {
+                    $pull: {
+                        options: {
+                            value: value
+                        }
+                    }
+                });
+            res.json(result)
+            console.log(result);
+
+        })
+
+        // DELETE ATTRIBUTE
+        app.delete('/dashboard/attributes/:id', async (req, res) => {
+            const id = req.params.id
+            console.log(id);
+            const query = { _id: objectId(id) }
+            const result = await unityMartAttributes.deleteOne(query)
+            res.json(result)
+        })
 
         // ADD ATTRIBUTES VALUEe
         app.put('/dashboard/attributes/', async (req, res) => {
@@ -412,7 +440,7 @@ async function run() {
             const earn = Number(earned)
             const filter = { short: ref };
 
-            const options = { upsert: true };
+            const options = { upsert: false };
             const updateDoc = {
                 $inc: {
                     earned: earn
@@ -421,7 +449,7 @@ async function run() {
             const user = await bicycleAffiliateLinksCollection.findOne({ short: ref })
 
             const result = await bicycleAffiliateLinksCollection.updateOne(filter, updateDoc, options);
-            res.json(result)
+
 
 
             var today = new Date();
@@ -435,11 +463,11 @@ async function run() {
                 }
             }
 
-
             const realTimeUpdate = await bicycleRealTimeDataCollection.findOneAndUpdate({ affiliateUser: user.affiliateUser }, updateData, {
                 new: true,
                 upsert: true
             })
+            res.json(result)
 
         })
         // GET DAILY UPDATE
