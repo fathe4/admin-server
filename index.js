@@ -73,6 +73,43 @@ async function uploadAndUnlink(file) {
     }
 }
 
+// SPLIT ORDER
+const groupByVendor = arr => (
+    arr.map(order => (
+        Object.values( // sub-objective 1 - get values from object
+            order.products.reduce(
+                (fin, p) => ({
+                    ...fin,
+                    ...(
+                        [p.vendor.email] in fin
+                            ? {
+                                [p.vendor.email]: {
+                                    ...fin[p.vendor.email],
+                                    products: fin[p.vendor.email].products.concat([{ ...p }]),
+                                    paymentDetails: {
+                                        ...structuredClone(fin[p.vendor.email].paymentDetails),
+                                        amount: fin[p.vendor.email].paymentDetails.amount + p.price
+                                    } // sub-objective 2 - add price to existing amount
+                                }
+                            }
+                            : {
+                                [p.vendor.email]: {
+                                    ...structuredClone(order), // sub-objective 3 - add order info here
+                                    paymentDetails: {
+                                        ...structuredClone(order.paymentDetails),
+                                        amount: p.price // sub-objective 2 - set amount to price
+                                    },
+                                    products: [{ ...p }]
+                                }
+                            }
+                    )
+                }),
+                {}
+            )
+        )
+    )).flat()
+);
+
 
 async function run() {
 
@@ -94,7 +131,9 @@ async function run() {
             console.log('hitting user');
             const user = req.body
             const isExist = await unityMartUsersCollection.findOne({ email: user.email });
-            console.log(isExist, 'isExist');
+            // if (user.role === 'vendor') {
+            //     await unityMartVendorsCollection.insertOne({ isProfileCompleted: false, storeEmail: user.email })
+            // }
             if (!isExist) {
                 const result = await unityMartUsersCollection.insertOne(user)
                 res.json(result)
@@ -155,11 +194,12 @@ async function run() {
         // MEDIA
         app.post('/media', async (req, res, next) => {
             const images = req.body.images
+            const vendor = req.body.vendor
             const promises = req.files.map(file => uploadAndUnlink(file));
             const urls = await Promise.all(promises);
             var m = new Date();
             var dateString = m.getUTCFullYear() + "/" + (m.getUTCMonth() + 1) + "/" + m.getUTCDate() + " " + m.getUTCHours() + ":" + m.getUTCMinutes() + ":" + m.getUTCSeconds();
-            const media = { urls: urls, uploadDate: dateString }
+            const media = { urls: urls, uploadDate: dateString, vendor }
             const result = await unityMartMediaCollection.insertOne(media)
             res.json(result);
         });
@@ -167,6 +207,12 @@ async function run() {
 
         app.get('/media/', async (req, res) => {
             const cursor = unityMartMediaCollection.find({});
+            const result = await cursor.toArray()
+            res.json(result)
+        })
+        app.get('/media/:email', async (req, res) => {
+            const vendor = req.params.email
+            const cursor = unityMartMediaCollection.find({ vendor: vendor });
             const result = await cursor.toArray()
             res.json(result)
         })
@@ -628,7 +674,12 @@ async function run() {
             const query = { "paymentDetails.createdId": id, "paymentDetails.email": email, }
             const cursor = unityMartOrdersCollection.find(query);
             const result = await cursor.toArray()
-            res.json(result)
+            if (result.length === 0) {
+                return res.status(200).json({ found: false });
+            } else {
+                return res.json(result)
+            }
+
 
         })
 
@@ -679,8 +730,17 @@ async function run() {
         })
         // VENDORS
         app.get('/user/vendor/:slug', async (req, res) => {
-            const email = req.params.slug
-            const query = { "storeSlug": email }
+            const slug = req.params.slug
+            const query = { "storeSlug": slug }
+            const cursor = unityMartVendorsCollection.find(query);
+            const result = await cursor.toArray()
+            // console.log(result);
+            res.json(result)
+        })
+        // VENDORS BY EMAIL
+        app.get('/user/vendors/:email', async (req, res) => {
+            const email = req.params.email
+            const query = { "storeEmail": email }
             const cursor = unityMartVendorsCollection.find(query);
             const result = await cursor.toArray()
             // console.log(result);
